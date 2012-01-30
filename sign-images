@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+exiftool -overwrite_original -Artist='Bobov Anton' -Copyright='Bobov Anton' -UserComment='http://dexter-tmn.livejournal.com/' $*
+

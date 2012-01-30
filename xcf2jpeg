@@ -1,0 +1,116 @@
+#!/bin/bash
+# Taken from: http://billauer.co.il/blog/2009/07/gimp-xcf-jpg-jpeg-convert-bash-script/
+
+SELFNAME=$(basename $0)
+SIZE=800
+QUALITY=95
+OVERWRITE=0
+GIMP="gimp"
+
+die()
+{
+	printf "%s\n" "$1" >&2
+	exit 1
+}
+
+print_help()
+{
+	cat >&2 << EOF
+Usage: ./$SELFNAME [OPTION]... [FILE]...
+
+	Convert XCF images to JPEG.
+
+Options:
+	-s, --size     size in pixels of biggest size of image (default: $SIZE)
+	-q, --quality  JPEG image quality in percents (0-100) (default: $QUALITY)
+	-f, --force    force convert, even if result file exists
+	-h, --help     print this help
+
+Example:
+	Convert all XCF files in directory 
+		./$SELFNAME *.xcf
+
+	Convert XCF file to 900px image
+		./$SELFNAME -s 900 image.xcf
+EOF
+}
+
+while [[ $1 = -* ]]
+do
+	case "$1" in
+		-s|--size) 
+			SIZE="$2"
+			[[ "$SIZE" -gt 0 ]] || die "Error: Size not integer: $SIZE"
+			shift
+			;;
+		-q|--quality) 
+			QUALITY="$2"
+			[[ "$QUALITY" -gt 0 && "$QUALITY" -le 100 ]] || die "Error: Quality not percent: $QUALITY"
+			shift
+			;;
+		-h|--help)
+			print_help
+			exit
+			;;
+		-f|--force)
+			OVERWRITE=1
+			;;
+		*) 
+			die "Error: Unknown option: $1"
+			;;
+	esac
+	shift
+done
+
+RATE_STEP=${RATE_STEP:=.7}
+
+{
+cat << EOF
+(define (resize image size)
+    (let* (
+           (rate-step $RATE_STEP)
+           (cur-width (car (gimp-image-width image)))
+           (cur-height (car (gimp-image-height image)))
+          )
+          (while (> (max cur-width cur-height) $SIZE)
+              (if (< (max (* cur-width rate-step) (* cur-height rate-step)) $SIZE)
+                (set! rate-step (min (/ $SIZE cur-height) (/ $SIZE cur-width)))
+                1
+              )
+              (set! cur-width (* cur-width rate-step))
+              (set! cur-height (* cur-height rate-step))
+
+              (gimp-image-scale image cur-width cur-height)
+          )
+    )
+)
+
+(define (convert-xcf-to-jpeg filename outfile)
+  (let* (
+         (image (car (gimp-file-load RUN-NONINTERACTIVE filename filename)))
+         (drawable (car (gimp-image-merge-visible-layers image CLIP-TO-IMAGE)))
+         )
+
+    (resize image $SIZE)
+
+    (file-jpeg-save RUN-NONINTERACTIVE image drawable outfile outfile (/ $QUALITY 100) 0 0 0 " " 0 1 0 1)
+    (gimp-image-delete image) ; ... or memory will explode
+    )
+  )
+(gimp-message-set-handler 1) ; Message to standart output
+EOF
+
+for file
+do
+	FILENAME=$file
+	OUT_FILENAME=${FILENAME%%.xcf}.jpg
+	if [[ $OVERWRITE = 0 && -f "$OUT_FILENAME" ]]
+	then
+		printf "Warning: File $OUT_FILENAME exists, skipping.\n" >&2
+		return
+	fi
+	echo "(convert-xcf-to-jpeg \"$FILENAME\" \"$OUT_FILENAME\")"
+done
+
+echo "(gimp-quit 0)"
+} | "$GIMP" -i -b -

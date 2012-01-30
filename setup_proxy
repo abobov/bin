@@ -1,0 +1,15 @@
+#!/bin/bash
+
+gconftool=gconftool-2
+
+http_proxy=
+no_proxy=
+
+if [[ 'true' = "$($gconftool -g /system/http_proxy/use_http_proxy)" ]] ; then
+    host=$($gconftool -g /system/http_proxy/host)
+    port=$($gconftool -g /system/http_proxy/port)
+    http_proxy=http://$host:$port/
+    no_proxy=$($gconftool -g /system/http_proxy/ignore_hosts | tr -d '[]')
+fi
+
+echo http_proxy no_proxy
