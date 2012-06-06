@@ -13,6 +13,7 @@ DEST=diskstation:/volume1/backup/lima
     echo /home/anton/.miro/Movies
     echo /home/anton/.cache
     echo /home/anton/.thumbnails
+    echo /home/anton/.local/share/Trash
     echo /initrd.img
     echo /initrd.img.old
     echo /lib
