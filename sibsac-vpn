@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+if [[ $(/usr/bin/id -u) -ne 0 ]] ; then
+    echo Not running as root
+    exit
+fi
+
+echo Connection to the VPN
+vpnc sibsac
+
+echo Press any key to disconnect ...
+
+read $disconnect
+
+echo Disconnection from the VPN
+vpnc-disconnect
+
+echo VPN should now be disconnected
+

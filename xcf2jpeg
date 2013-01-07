@@ -5,6 +5,7 @@ SELFNAME=$(basename $0)
 SIZE=800
 QUALITY=95
 OVERWRITE=0
+OUTPUT_DIR=
 GIMP="gimp"
 
 die()
@@ -25,6 +26,8 @@ Options:
 	-q, --quality  JPEG image quality in percents (0-100) (default: $QUALITY)
 	-f, --force    force convert, even if result file exists
 	-h, --help     print this help
+	--output-dir   name of output directory where place files. By default files
+	               placed in same directory with source.
 
 Example:
 	Convert all XCF files in directory 
@@ -54,6 +57,10 @@ do
 			;;
 		-f|--force)
 			OVERWRITE=1
+			;;
+		--output-dir)
+			OUTPUT_DIR="$2"
+			shift
 			;;
 		*) 
 			die "Error: Unknown option: $1"
@@ -104,6 +111,10 @@ for file
 do
 	FILENAME=$file
 	OUT_FILENAME=${FILENAME%%.xcf}.jpg
+	if [[ -n "$OUTPUT_DIR" ]]
+	then
+		OUT_FILENAME="$OUTPUT_DIR/$(basename "$OUT_FILENAME")"
+	fi
 	if [[ $OVERWRITE = 0 && -f "$OUT_FILENAME" ]]
 	then
 		printf "Warning: File $OUT_FILENAME exists, skipping.\n" >&2
