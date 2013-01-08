@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -e
+
+die() {
+    echo $1
+    exit 1
+}
+
+[ $# = 0 ] && die 'No input file name.'
+
+fname="$1"
+output="$1.mp4"
+bitrate=11000k
+
+if [ -f "$output" ] ; then
+    printf 'Output file exists: %s. Override? [yN] ' "$output"
+    read answer
+    case "$answer" in
+        [yY]) ;;
+        *) exit 0;;
+    esac
+fi
+
+vcodec_opts="-preset medium -level 4.1 -r 25 -b:v $bitrate -bt $bitrate -s hd1080 -aspect 16:9"
+
+ffmpeg -v warning -i "$fname"\
+    -vcodec libx264 $vcodec_opts\
+    -an\
+    -pass 1\
+    -f mp4 -y /dev/null
+
+ffmpeg -v warning -i "$fname"\
+    -vcodec libx264 $vcodec_opts\
+    -acodec libmp3lame -ab 256k\
+    -pass 2\
+    -y "$output"
