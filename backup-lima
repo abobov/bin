@@ -2,7 +2,7 @@
 
 set +e
 
-DEST=diskstation:/volume1/backup/lima
+DEST=anton@bonn:/mnt/mirror/backup/lima
 
 {
     echo /bin
@@ -10,10 +10,10 @@ DEST=diskstation:/volume1/backup/lima
     echo /dev
     echo /home/anton/Music
     echo /home/anton/Videos
-    echo /home/anton/.miro/Movies
     echo /home/anton/.cache
     echo /home/anton/.thumbnails
     echo /home/anton/.local/share/Trash
+    echo /home/anton/.m2
     echo /initrd.img
     echo /initrd.img.old
     echo /lib
@@ -37,4 +37,4 @@ DEST=diskstation:/volume1/backup/lima
     echo /var/lib
     echo /vmlinuz
     echo /vmlinuz.old
-} | sudo rsync --archive --verbose --compress --progress --human-readable --delete --delete-excluded --delete-after --exclude-from=- -xdev -e ssh / /home "$DEST"
+} | sudo rsync --archive --verbose --compress --progress --human-readable --delete --delete-excluded --exclude-from=- -xdev -e "ssh -i $HOME/.ssh/id_rsa" / /home "$DEST"

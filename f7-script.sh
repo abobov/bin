@@ -3,7 +3,7 @@
 set -e
 
 INTERNAL=LVDS1
-EXTERNAL=VGA1
+EXTERNAL=HDMI1
 
 show_usage() {
     cat <<END
@@ -25,7 +25,6 @@ screen_external() {
     xrandr --output "$EXTERNAL" --auto
 }
 screen_internal() {
-    xrandr --output "$EXTERNAL" --off
     xrandr --output "$INTERNAL" --auto
 }
 screen_mirror() {

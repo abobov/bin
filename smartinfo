@@ -1,0 +1,32 @@
+#!/bin/bash
+# Get device S.M.A.R.T. and store in appropriate file.
+
+set -e
+
+die() {
+    echo $1
+    exit 1
+}
+
+get_file_name() {
+    sn=$(sed -n 's/Serial Number: \+//p' < "$1" | tr ' ' '_')
+    printf 'smart-%s-%s.txt' "$sn" "$(date +%F)"
+}
+
+[ -b "$1" ] && DEVICE="$1" || die 'First parameter must be block device.'
+
+tmp=$(tempfile)
+sudo smartctl -Ai "$DEVICE" > "$tmp"
+fname=$(get_file_name "$tmp")
+if [ -f "$fname" ] ; then
+    echo "File $fname already exists. Override? [yN] "
+    read answer
+    case "$answer" in
+        y|Y)
+            ;;
+        *)
+            exit 0
+            ;;
+    esac
+fi
+mv "$tmp" "$fname"
