@@ -10,6 +10,7 @@ DEST=anton@bonn:/mnt/mirror/backup/lima
     echo /dev
     echo /home/anton/Music
     echo /home/anton/Videos
+    echo /home/anton/VirtualBox VMs/
     echo /home/anton/.cache
     echo /home/anton/.thumbnails
     echo /home/anton/.local/share/Trash

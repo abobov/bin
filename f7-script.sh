@@ -26,6 +26,7 @@ screen_external() {
 }
 screen_internal() {
     xrandr --output "$INTERNAL" --auto
+    xrandr --output "$EXTERNAL" --off
 }
 screen_mirror() {
     xrandr --output "$INTERNAL" --auto
@@ -68,7 +69,7 @@ EXTERNAL_STATE=$(screen_get_state "$EXTERNAL")
 EXTERNAL_CONNECTED=$(is_connected "$EXTERNAL_STATE")
 
 if [ -z "$EXTERNAL_CONNECTED" ] ; then
-    echo "External monitor $EXTERNAL not connected." >&2
+    screen_internal
     exit 0
 fi
 
