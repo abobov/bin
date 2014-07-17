@@ -53,6 +53,10 @@ screen_toggle() {
 
 screen_get_state() {
     SCREEN="$1"
+    if [ -z "$SCREEN" ] ; then
+        echo ""
+        return
+    fi
     xrandr --query | grep "^$SCREEN"
     #xrandr --query | grep "^$SCREEN" | grep connected | sed 's/.*connected\s*\([^ ]\+\).*/\1/' | grep -o '[0-9]*x[0-9]*' || echo
 }
