@@ -2,8 +2,8 @@
 
 set -e
 
-INTERNAL=LVDS1
-EXTERNAL=HDMI1
+INTERNAL=$(xrandr --query | gawk '/^LVDS[0-9] connected /{ print $1; exit }')
+EXTERNAL=$(xrandr --query | gawk '!/^LVDS[0-9]/ && / connected /{print $1; exit }')
 
 show_usage() {
     cat <<END
