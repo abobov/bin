@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# by Sairon Istyar, 2012
+# distributed under the GPLv3 license
+# http://www.opensource.org/licenses/gpl-3.0.html
+#
+
+API_KEY_FILE=$HOME/.wolfram_api_key
+
+if [ ! -f "$API_KEY_FILE" ] ; then
+    echo "No key file: $API_KEY_FILE" >&2
+    exit 1
+fi
+. "$API_KEY_FILE"
+if [ -z "$API_KEY" ] ; then
+    echo "No API_KEY set in key file: $API_KEY_FILE" >&2
+    exit 2
+fi
+
+# properly encode query
+q=$(echo ${*} | sed 's/+/%2B/g' | tr '\ ' '\+')
+
+# fetch and parse result
+result=$(curl -s "http://api.wolframalpha.com/v2/query?input=${q}&appid=${API_KEY}&format=plaintext")
+
+if [ -n "$(echo ${result} | grep 'Invalid appid')" ] ; then
+	echo "Invalid API key!"
+	echo "Get one at https://developer.wolframalpha.com/portal/apisignup.html"
+	echo -n 'Enter your WolframAlpha API key:'
+	read api_key
+	echo "API_KEY=${api_key}" >> ~/.wolfram_api_key
+	exit 1
+fi
+
+result=`echo "${result}" \
+	| tr '\n' '\t' \
+	| sed -e 's/<plaintext>/\'$'\n<plaintext>/g' \
+	| grep -oE "<plaintext>.*</plaintext>|<pod title=.[^\']*" \
+	| sed -e 's!<plaintext>!!g; \
+		s!</plaintext>!!g; \
+		s!<pod title=.*!\\\x1b[1;36m&\\\x1b[0m!g; \
+		s!<pod title=.!!g; \
+		s!\&amp;!\&!g; \
+		s!\&lt;!<!g; \
+		s!\&gt;!>!g; \
+		s!\&quot;!"!g' \
+		-e "s/\&apos;/'/g" \
+	| tr '\t' '\n' \
+	| sed  '/^$/d; \
+		s/\ \ */\ /g; \
+		s/\\\:/\\\u/g'`
+
+# print result
+echo -e "${result}" | less
