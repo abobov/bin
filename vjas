@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# Join and encode video N-times faster.
+#
+
+set -e
+
+# VARIABLES
+
+SELFNAME=$(basename $0)
+
+# FUNCTIONS
+
+cleanup() {
+    rm -f "$CONCAT_FILE"
+}
+
+get_video_filter() {
+    echo "setpts=PTS/$1"
+}
+
+get_audio_filter() {
+    bc <<END
+scale = 6
+max = $1
+f = 1
+while (f < max) {
+    if (f * 2 > max) {
+        break;
+    }
+    if (f > 1) {
+        print ","
+    }
+    print "atempo=2.0"
+    f *= 2
+}
+if (f == max) {
+} else {
+    print ",atempo=", max/f
+}
+END
+}
+
+die() {
+    printf "%s\n" "$1" >&2
+    exit 1
+}
+
+print_help() {
+    cat >&2 <<END
+Usage: $SELFNAME [OPTIONS]... [FILE]...
+
+    Join and speed up video files.
+
+Options:
+    -s, --speed     speed up factor (min is 2)
+    -o, --output    output file name (random .mp4 by default)
+
+Example:
+    Speed up 16-times all MTS files in current directiory
+        $SELFNAME -s 16 -o out.mp4 *.MTS
+END
+}
+
+# MAIN
+
+trap cleanup EXIT
+
+while [[ $1 = -* ]] ; do
+    case "$1" in
+        -s|--speed)
+            SPEED="$2"
+            [[ "$SPEED" -ge 2 ]] || die "Error: Speed not integer or less then 2: $SPEED"
+            shift
+            ;;
+        -o|--output)
+            OUTPUT="$2"
+            shift
+            ;;
+        -h|--help)
+            print_help
+            exit
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            die "Error: Unknown option: $1"
+            ;;
+    esac
+    shift
+done
+
+[[ -z "$SPEED" ]] && die "No speed set.  See help for details"
+
+VIDEO_FILTER=$(get_video_filter $SPEED)
+AUDIO_FILTER=$(get_audio_filter $SPEED)
+
+echo "Files to process (in order):"
+for f in $* ; do
+    echo "  $f"
+done
+read -p 'Press Enter to continue.'
+
+CONCAT_FILE=$(tempfile -d .)
+for f in $* ; do
+    echo "file '$f'" >> "$CONCAT_FILE"
+done
+
+[[ -z "$OUTPUT" ]] && OUTPUT=$(tempfile -d . --suffix .mp4)
+
+ffmpeg -f concat -i "$CONCAT_FILE" \
+    -strict -2 \
+    -c:v libx264 -preset slow -crf 22 \
+    -c:a aac -b:a 128k \
+    -filter_complex "[0:v]$VIDEO_FILTER[v];[0:a]$AUDIO_FILTER[a]" \
+    -map "[v]" -map "[a]" \
+    -y "$OUTPUT"
