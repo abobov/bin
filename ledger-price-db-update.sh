@@ -17,5 +17,8 @@ xe() {
     curl -s "http://download.finance.yahoo.com/d/quotes.csv?s=$1&f=p"
 }
 
-echo P $(date +"%Y/%m/%d %H:%M:%S") \$ $(xe "USDRUB=X") R >> "$PRICE_DB_FILE"
-echo P $(date +"%Y/%m/%d %H:%M:%S") €  $(xe "EURRUB=X") R >> "$PRICE_DB_FILE"
+usd=$(xe "USDRUB=X")
+eur=$(xe "EURRUB=X")
+
+test -n "$usd" && echo P $(date +"%Y/%m/%d %H:%M:%S") \$ $usd R >> "$PRICE_DB_FILE"
+test -n "$eur" && echo P $(date +"%Y/%m/%d %H:%M:%S") €  $eur R >> "$PRICE_DB_FILE"
