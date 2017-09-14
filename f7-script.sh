@@ -2,8 +2,15 @@
 
 set -e
 
-INTERNAL=$(xrandr --query | gawk '/^LVDS-?[0-9] connected /{ print $1; exit }')
-EXTERNAL=$(xrandr --query | gawk '!/^LVDS-?[0-9]/ && / connected /{print $1; exit }')
+outputs=($(xrandr --query | awk '/^[^ ]+ connected / { print $1 }'))
+
+echo ${#outputs[@]}
+echo ${outputs[1]}
+
+exit 0
+
+INTERNAL=$(xrandr --query | awk '/^\w+-?[0-9] connected /{ print $1; exit }')
+EXTERNAL=$(xrandr --query | awk '/^\w+-?[0-9] connected /{print $1; exit }')
 
 if [ -z "$INTERNAL" ] ; then
     echo "WARN: No internal screen."
@@ -11,6 +18,10 @@ fi
 if [ -z "$EXTERNAL" ] ; then
     echo "WARN: No external screen."
 fi
+
+echo $INTERNAL $EXTERNAL
+
+return 0
 
 show_usage() {
     cat <<END
