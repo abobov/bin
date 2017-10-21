@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+recent_value=$(xclip -o -selection clipboard)
+while true ; do
+    value=$(xclip -o -selection clipboard)
+    if [ "$recent_value" != "$value" ] ; then
+        recent_value=$value
+        echo $recent_value
+    fi
+    sleep 0.1
+done
