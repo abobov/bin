@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ $# -eq 0 ] ; then
+    echo First arguments must be a file.
+    exit 1
+fi
+
+PDF_FILE="$(tempfile --suffix .pdf)"
+trap 'rm "$PDF_FILE"' EXIT
+unoconv --format pdf -o "$PDF_FILE" "$1" && xdg-open "$PDF_FILE" && sleep 5
