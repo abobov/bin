@@ -9,14 +9,30 @@ die() {
 }
 
 get_file_name() {
-    sn=$(sed -n 's/Serial Number: \+//p' < "$1" | tr ' ' '_')
-    printf 'smart-%s-%s.txt' "$sn" "$(date +%F)"
+    sn=$(sed -n 's/^Serial Number: \+//p' < "$1")
+    dm=$(sed -n 's/^Device Model: \+//p' < "$1")
+    printf 'smart-%s-%s-%s.txt' "$dm" "$sn" "$(date +%F-%H-%M-%S)" | tr ' ' '_'
+}
+
+smart_bits() {
+    code=$1
+    echo "WARNING: S.M.A.R.T. exit code was $code"
+    echo -n "Check man 8 smartctl for EXIT STATUS section on bits: "
+    val=$code
+    mask=1
+    for i in 0 1 2 3 4 5 6 7; do
+        if ((($val & $mask) && 1)) ; then
+            echo "$i "
+        fi
+        mask=$((mask << 1))
+    done
+    echo
 }
 
 [ -b "$1" ] && DEVICE="$1" || die 'First parameter must be block device.'
 
 tmp=$(tempfile)
-sudo smartctl -Ai "$DEVICE" > "$tmp"
+sudo smartctl -x "$DEVICE" > "$tmp" || smart_bits $? 1>&2
 fname=$(get_file_name "$tmp")
 if [ -f "$fname" ] ; then
     echo "File $fname already exists. Override? [yN] "
@@ -30,3 +46,4 @@ if [ -f "$fname" ] ; then
     esac
 fi
 mv "$tmp" "$fname"
+echo "File: $fname"
