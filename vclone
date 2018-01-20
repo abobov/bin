@@ -29,6 +29,8 @@ read -p "Enter new image name: " NAME
 
 echo "Cloning..."
 virt-clone --quiet --original "$BASE_IMAGE" --auto-clone --name "$NAME"
+virsh desc --new-desc '' "$NAME"
+virsh desc --title --new-desc "clone/$NAME" "$NAME"
 echo "Cloning... Done."
 echo "Preparing..."
 virt-sysprep --quiet --domain "$NAME" --hostname "$NAME"
