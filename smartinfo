@@ -9,8 +9,8 @@ die() {
 }
 
 get_file_name() {
-    sn=$(sed -n 's/^Serial Number: \+//p' < "$1")
-    dm=$(sed -n 's/^Device Model: \+//p' < "$1")
+    sn=$(sed -n 's/^Serial Number: \+//ip' < "$1")
+    dm=$(sed -n 's/^\(Device Model\|Product\): \+//ip' < "$1")
     printf 'smart-%s-%s-%s.txt' "$dm" "$sn" "$(date +%F-%H-%M-%S)" | tr ' ' '_'
 }
 
