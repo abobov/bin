@@ -6,25 +6,32 @@ if [ $# = 0 ] ; then
     exit 0
 fi
 
+if ! (hash phantomjs >/dev/null 2>&1) ; then
+    exit 1
+fi
+
 from=${1:0:3}
 to=${1:3:3}
 
 get_value() {
-    curl -s "http://www.xe.com/currencyconverter/convert/?Amount=1&From=$from&To=$to" | \
-        grep -o "<span class='uccResultAmount'>[^<]\+" | \
-        grep -o '[0-9\.]\+'
+    script=$(tempfile)
+    url="http://www.xe.com/currencyconverter/convert/?Amount=1&From=$from&To=$to"
+    cat <<EOF >$script
+    var page = require('webpage').create();
+page.open('$url', function(status) {
+    if (status !== 'success') {
+        console.log('Unable to access network');
+    } else {
+        var ua = page.evaluate(function() {
+            return document.querySelector('.converterresult-toAmount').textContent;
+        });
+        console.log(ua);
+    }
+    phantom.exit();
+});
+EOF
+    timeout 15s phantomjs $script | head -n 1
+    rm $script
 }
 
-get_value_at_date() {
-    date=$(date -d "$1" +%F)
-    curl -s "http://www.xe.com/currencytables/?from=$from&date=$date" | \
-        xmllint --nonet --html --xpath "//table[@id='historicalRateTbl']/tbody/tr[td/a/text() = '${to^^}']/td[3]/text()" - 2>/dev/null
-}
-
-if [ -z "$2" ] ; then
-    val=$(get_value)
-else
-    val=$(get_value_at_date "$2")
-fi
-
-printf '%.4f\n' $val
+get_value $from $to

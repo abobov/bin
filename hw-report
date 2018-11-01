@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+if hash lshw 2>/dev/null ; then
+    report="lshw-$(hostname)-$(date +%F)"
+    report_txt="$report.txt"
+    report_html="$report.html"
+    sudo lshw > "$report_txt" 2>/dev/null
+    sudo lshw -html > "$report_html" 2>/dev/null
+else
+    echo No lshw command.
+    exit 1
+fi
