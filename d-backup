@@ -27,6 +27,7 @@ EOF
 
 backup() {
     duplicity cleanup --force "$TARGET"
+    duplicity remove-all-but-n-full 3 --force "$TARGET"
     duplicity \
         --exclude-filelist "$HOME/.duplicity-exclude" \
         --full-if-older-than 2M \
