@@ -61,14 +61,11 @@ def exchange_rates():
 
 def stocks():
     for symbol in config.get('stocks', 'symbols').split(','):
-        post_data = {
-                'msg': 'min',
-                'symbol': symbol,
-                'qesymbol': symbol
-        }
-        response = requests.post(r'https://www.nasdaq.com/callbacks/NLSHandler2.ashx', data=post_data)
+        params = { "assetclass": "stocks" }
+        url = r'https://api.nasdaq.com/api/quote/%s/info' % (symbol)
+        response = requests.get(url, params=params)
         data = json.loads(response.content)
-        price = data['data'][-1]['price']
+        price = float(data['data']['keyStats']['PreviousClose']['value'][1:])
         print_price(symbol, price, '$')
 
 def get_moex_value(data, name):
@@ -92,21 +89,31 @@ def bonds():
     date = datetime.datetime.now() - datetime.timedelta(days=1)
     date_str = date.strftime('%Y-%m-%d')
     for short, symbol in symbols:
-        url = r'https://iss.moex.com/iss/history/engines/stock/markets/bonds/boards/TQOD/securities/%s.jsonp?from=%s' % (symbol, date_str)
-        data = get_json(url)['history']
-        if len(data['data']) > 0:
-            value = get_moex_value(data, 'CLOSE')
-            nominal = get_moex_value(data, 'FACEVALUE')
-            currency = get_moex_value(data, 'FACEUNIT')
-            if currency == 'USD':
-                currency = '$'
-            elif currency == 'EUR':
-                currency = '€'
-            elif currency == 'RUB':
-                currency = 'R'
-            if value is None or nominal is None or currency is None:
+        if symbol.startswith('SU'):
+            url = r'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities/%s.jsonp?from=%s' % (symbol, date_str)
+            data = get_json(url)['securities']
+            price = get_moex_value(data, 'PREVPRICE')
+            value = get_moex_value(data, 'FACEVALUE')
+            accrued = get_moex_value(data, 'ACCRUEDINT')
+            if price is None or value is None or accrued is None:
                 continue
-            print_price(short.upper(), value * nominal / 100.0, currency, date)
+            print_price(short.upper(), price / 100.0 * value + accrued, 'R', date)
+        else:
+            url = r'https://iss.moex.com/iss/history/engines/stock/markets/bonds/boards/TQOD/securities/%s.jsonp?from=%s' % (symbol, date_str)
+            data = get_json(url)['history']
+            if len(data['data']) > 0:
+                value = get_moex_value(data, 'CLOSE')
+                nominal = get_moex_value(data, 'FACEVALUE')
+                currency = get_moex_value(data, 'FACEUNIT')
+                if currency == 'USD':
+                    currency = '$'
+                elif currency == 'EUR':
+                    currency = '€'
+                elif currency == 'RUB':
+                    currency = 'R'
+                if value is None or nominal is None or currency is None:
+                    continue
+                print_price(short.upper(), value * nominal / 100.0, currency, date)
 
 
 def main():
