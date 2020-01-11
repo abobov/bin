@@ -41,6 +41,8 @@ def get_json(url, **kwargs):
 
 def print_price(symbol, price, base, date=datetime.datetime.now()):
     date_str = date.strftime('%Y/%m/%d %H:%M:%S')
+    if ' ' in symbol:
+        symbol = '"' + symbol +'"'
     print ('P %s %s %f %s'  % (date_str, symbol, price, base)).encode('utf-8')
 
 
@@ -89,8 +91,11 @@ def bonds():
     date = datetime.datetime.now() - datetime.timedelta(days=1)
     date_str = date.strftime('%Y-%m-%d')
     for short, symbol in symbols:
-        if symbol.startswith('SU'):
-            url = r'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities/%s.jsonp?from=%s' % (symbol, date_str)
+        if symbol.startswith('SU') or symbol.startswith('RU'):
+            if symbol.startswith('SU'):
+                url = r'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities/%s.jsonp?from=%s' % (symbol, date_str)
+            else:
+                url = r'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/EQOB/securities/%s.jsonp?from=%s' % (symbol, date_str)
             data = get_json(url)['securities']
             price = get_moex_value(data, 'PREVPRICE')
             value = get_moex_value(data, 'FACEVALUE')

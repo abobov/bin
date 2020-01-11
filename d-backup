@@ -20,8 +20,12 @@ SOURCE=/
 print_help() {
     cat <<EOF
 Commands:
-  backup  run backup
-  stats   show collection status
+  backup        run backup
+  stats         show collection status
+  list          list files from backup
+  restore       restore files from backup
+Options:
+  --time time   specify the time from which to restore or list files
 EOF
 }
 
@@ -38,6 +42,14 @@ stats() {
     duplicity collection-status "$TARGET"
 }
 
+list() {
+    duplicity list-current-files "$@" "$TARGET"
+}
+
+restore() {
+    duplicity restore "$@" "$TARGET" "$(pwd)"
+}
+
 if [[ $# = 0 ]] ; then
     print_help
     exit 0
@@ -50,6 +62,16 @@ while (( "$#" )) ; do
             ;;
         stats)
             stats
+            ;;
+        list)
+            shift
+            list $*
+            exit 0
+            ;;
+        restore)
+            shift
+            restore $*
+            exit 0
             ;;
         *)
             print_help
