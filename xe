@@ -15,7 +15,7 @@ to=${1:3:3}
 
 get_value() {
     script=$(tempfile)
-    url="http://www.xe.com/currencyconverter/convert/?Amount=1&From=$from&To=$to"
+    url="https://www.xe.com/currencyconverter/convert/?Amount=1&From=$from&To=$to"
     cat <<EOF >$script
     var page = require('webpage').create();
 page.open('$url', function(status) {

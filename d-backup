@@ -25,7 +25,7 @@ Commands:
   list          list files from backup
   restore       restore files from backup
 Options:
-  --time time   specify the time from which to restore or list files
+  --time|-t time   specify the time from which to restore or list files
 EOF
 }
 
