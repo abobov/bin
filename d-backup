@@ -21,6 +21,7 @@ print_help() {
     cat <<EOF
 Commands:
   backup        run backup
+  cleanup       cleanup
   stats         show collection status
   list          list files from backup
   restore       restore files from backup
@@ -30,12 +31,16 @@ EOF
 }
 
 backup() {
-    duplicity cleanup --force "$TARGET"
-    duplicity remove-all-but-n-full 3 --force "$TARGET"
     nice ionice duplicity \
         --exclude-filelist "$HOME/.duplicity-exclude" \
         --full-if-older-than 2M \
         "$SOURCE" "$TARGET"
+    cleanup
+}
+
+cleanup() {
+    duplicity cleanup --force "$TARGET"
+    duplicity remove-all-but-n-full 3 --force "$TARGET"
 }
 
 stats() {
@@ -59,6 +64,9 @@ while (( "$#" )) ; do
     case "$1" in
         backup)
             backup
+            ;;
+        cleanup)
+            cleanup
             ;;
         stats)
             stats
