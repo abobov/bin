@@ -58,6 +58,11 @@ fio2cdm() {
 
 trap "rm -f ${TARGET}/.fio-diskmark" 0 1 2 3 9 15
 
+if [ -z "$TARGET" ] ; then
+    echo "First argument should be target directory."
+    exit 1
+fi
+
 # see. http://www.winkey.jp/article.php/20110310142828679
 cat <<_EOL_ | fio --output-format=terse - | fio2cdm
 [global]
