@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import sys
@@ -31,7 +31,7 @@ from codecs import open
 
 CONFIG_FILE = '~/.ledger-commodities'
 config = ConfigParser()
-config.readfp(open(os.path.expanduser(CONFIG_FILE), 'r', 'utf-8'))
+config.read_file(open(os.path.expanduser(CONFIG_FILE), 'r', 'utf-8'))
 
 
 def get_json(url, **kwargs):
@@ -43,7 +43,7 @@ def print_price(symbol, price, base, date=datetime.datetime.now()):
     date_str = date.strftime('%Y/%m/%d %H:%M:%S')
     if ' ' in symbol:
         symbol = '"' + symbol +'"'
-    print ('P %s %s %f %s'  % (date_str, symbol, price, base)).encode('utf-8')
+    print(('P %s %s %f %s'  % (date_str, symbol, price, base)))
 
 
 def exchange_rates():
@@ -51,12 +51,12 @@ def exchange_rates():
     symbols = dict([(symbol.upper(), commodity) for symbol, commodity in config.items('exchange-symbols')])
     params = {
             "access_key": config.get('fixer', 'access_key'),
-            "symbols": ','.join(symbols.keys() + [base,])
+            "symbols": ','.join(list(symbols.keys()) + [base,])
     }
 
     rates = get_json(r'http://data.fixer.io/api/latest', params=params)['rates']
     base_value = rates[base]
-    for symbol, value in rates.items():
+    for symbol, value in list(rates.items()):
         if symbol != base:
             print_price(symbols[symbol], base_value / value, symbols[base])
 
@@ -127,7 +127,7 @@ def main():
         try:
             update()
         except Exception as e:
-            print >> sys.stderr, 'Oops, update method `%s` failed: %s' % (update, e)
+            print('Oops, update method `%s` failed: %s' % (update, e), file=sys.stderr)
             traceback.print_exc()
 
 if __name__ == '__main__':

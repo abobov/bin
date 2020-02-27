@@ -1,16 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 
 def read_data():
     data = []
     while True:
-        text = raw_input()
+        text = input()
         if text == '':
             break
         try:
             sp = text.split()
-            (value, cost) = map(float, sp)
+            (value, cost) = list(map(float, sp))
             data.append((cost / value, value, cost, text))
         except ValueError:
             pass
@@ -18,16 +18,16 @@ def read_data():
 
 
 def main():
-    print 'Enter data table (last line should be empty): value cost'
-    print
+    print('Enter data table (last line should be empty): value cost')
+    print()
 
     data = sorted(read_data())
     if len(data):
-        print '%10s | %10s | %10s' % ("Ratio", "Value", "Cost")
+        print('%10s | %10s | %10s' % ("Ratio", "Value", "Cost"))
         for ratio, _, _, orig_value in data:
-            print '%10.2f | %10s | %10s' % tuple([ratio, ] + orig_value.split())
-        print
-        print 'Best choose is %s' % data[0][-1]
+            print('%10.2f | %10s | %10s' % tuple([ratio, ] + orig_value.split()))
+        print()
+        print('Best choose is %s' % data[0][-1])
 
 
 if __name__ == '__main__':

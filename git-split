@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # https://stackoverflow.com/questions/40698651/how-to-split-every-commit-by-file
 # Split HEAD commit into multiples with single file in it.
+#
+# If you want to split a single commit during an interactive rebase, use it like this:
+#   p Commit to split
+#   x git-split
 
 set -e
 
