@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ -x "$(command -v xmlstarlet)" ] ; then
+    xmlstarlet format --omit-decl
+elif [ -x "$(command -v xmllint)" ] ; then
+    xmllint --format -
+else
+    exit 1
+fi
+

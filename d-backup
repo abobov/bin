@@ -31,7 +31,7 @@ EOF
 }
 
 backup() {
-    nice ionice duplicity \
+    nice ionice duplicity $DUPLICITY_OPTS \
         --exclude-filelist "$HOME/.duplicity-exclude" \
         --full-if-older-than 2M \
         "$SOURCE" "$TARGET"
@@ -39,20 +39,20 @@ backup() {
 }
 
 cleanup() {
-    duplicity cleanup --force "$TARGET"
-    duplicity remove-all-but-n-full 3 --force "$TARGET"
+    duplicity $DUPLICITY_OPTS cleanup --force "$TARGET"
+    duplicity $DUPLICITY_OPTS remove-all-but-n-full 3 --force "$TARGET"
 }
 
 stats() {
-    duplicity collection-status "$TARGET"
+    duplicity $DUPLICITY_OPTS collection-status "$TARGET"
 }
 
 list() {
-    duplicity list-current-files "$@" "$TARGET"
+    duplicity $DUPLICITY_OPTS list-current-files "$@" "$TARGET"
 }
 
 restore() {
-    duplicity restore "$@" "$TARGET" "$(pwd)"
+    duplicity $DUPLICITY_OPTS restore "$@" "$TARGET" "$(pwd)"
 }
 
 if [[ $# = 0 ]] ; then
