@@ -36,10 +36,12 @@ import requests
 CONFIG_FILE = '~/.ledger-commodities'
 config = ConfigParser()
 config.read_file(open(os.path.expanduser(CONFIG_FILE), 'r', 'utf-8'))
-
+headers = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+}
 
 def get_json(url, **kwargs):
-    response = requests.get(url, **kwargs)
+    response = requests.get(url, timeout=10, headers=headers, **kwargs)
     return json.loads(response.content)
 
 
@@ -69,8 +71,7 @@ def stocks():
     for symbol in config.get('stocks', 'symbols').split(','):
         params = {"assetclass": "stocks"}
         url = r'https://api.nasdaq.com/api/quote/%s/info' % (symbol)
-        response = requests.get(url, params=params)
-        data = json.loads(response.content)
+        data = get_json(url, params=params)
         price = float(data['data']['keyStats']['PreviousClose']['value'][1:])
         print_price(symbol, price, '$')
 
@@ -78,9 +79,8 @@ def stocks():
 def get_moex_value(data, name):
     if 'columns' in data:
         index = data['columns'].index(name)
-        if 'data' in data:
-            if len(data['data']) > 0:
-                return data['data'][0][index]
+        if 'data' in data and len(data['data']) > 0:
+            return data['data'][0][index]
     return None
 
 
