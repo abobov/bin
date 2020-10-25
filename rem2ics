@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+#
+# Converts output of remind to ICS format:
+#
+# Usage example: rem -ppp12 | rem2ics
+#
+# https://tools.ietf.org/html/rfc5545
+import datetime
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from os.path import basename, splitext
+
+
+class Event:
+    def __init__(self, uid, event_json):
+        self.event_json = event_json
+        self.uid = uid
+
+    def summary(self):
+        e = self.event_json
+        summary = e.get('body', '').replace(r'%"', '')
+        if 'time' in e:
+            summary = summary[6:]
+        if 'passthru' in e and 'COLOR' in e['passthru']:
+            summary = ' '.join(summary.split(' ')[3:])
+        return summary
+
+    def categories(self):
+        filename = basename(self.event_json['filename'].upper())
+        return splitext(filename)[0]
+
+    def dtstart(self):
+        e = self.event_json
+        if 'eventstart' in e:
+            dt = datetime.strptime(e['eventstart'], '%Y-%m-%dT%H:%M')
+            return self.__datetime_format(dt)
+        return e['date'].replace('-', '')
+
+    def dtend(self):
+        e = self.event_json
+        if 'rep' in e and 'until' in e:
+            dt = datetime.strptime(e['until'], '%Y-%m-%d')
+            return (dt + timedelta(days=1)).strftime('%Y%m%d')
+        elif 'eventduration' in e and 'eventstart' in e:
+            dt = datetime.strptime(e['eventstart'], '%Y-%m-%dT%H:%M')
+            return self.__datetime_format(dt + timedelta(minutes=int(e['eventduration'])))
+        return self.dtstart()
+
+    @staticmethod
+    def __datetime_format(dt):
+        return dt.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+
+
+def create_uid(event):
+    if 'rep' in event and 'until' in event:
+        date = event['until']
+    else:
+        date = event['date']
+    return "%s:%s:%s" % (basename(event['filename']), event['lineno'], date)
+
+
+def print_ics(events):
+    print('BEGIN:VCALENDAR')
+    print('VERSION:2.0')
+    for event in events:
+        print('BEGIN:VEVENT')
+        print('UID:%s' % event.uid)
+        print('DTSTART:%s' % event.dtstart())
+        print('DTEND:%s' % event.dtend())
+        print('SUMMARY:%s' % event.summary())
+        print('CATEGORIES:%s' % event.categories())
+        print('END:VEVENT')
+    print('END:VCALENDAR')
+
+
+def rem2ics():
+    added = set()
+    events = []
+    data = json.load(sys.stdin)
+    for month in data:
+        for event_json in month['entries']:
+            uid = create_uid(event_json)
+            if uid in added:
+                continue
+            added.add(uid)
+            events.append(Event(uid, event_json))
+    print_ics(events)
+
+
+if __name__ == '__main__':
+    rem2ics()

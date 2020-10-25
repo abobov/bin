@@ -13,6 +13,8 @@ if [ ! $(whoami) = root ] ; then
 fi
 
 HOME=/home/anton
+REMOVE_ALL_BUT_N_FULL=4
+FULL_IF_OLDER_THAN=3M
 
 source "$HOME/.duplicity.conf"
 SOURCE=/
@@ -33,14 +35,14 @@ EOF
 backup() {
     nice ionice duplicity $DUPLICITY_OPTS \
         --exclude-filelist "$HOME/.duplicity-exclude" \
-        --full-if-older-than 2M \
+        --full-if-older-than "$FULL_IF_OLDER_THAN" \
         "$SOURCE" "$TARGET"
     cleanup
 }
 
 cleanup() {
     duplicity $DUPLICITY_OPTS cleanup --force "$TARGET"
-    duplicity $DUPLICITY_OPTS remove-all-but-n-full 3 --force "$TARGET"
+    duplicity $DUPLICITY_OPTS remove-all-but-n-full $REMOVE_ALL_BUT_N_FULL --force "$TARGET"
 }
 
 stats() {
