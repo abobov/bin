@@ -21,7 +21,7 @@ class Event:
         e = self.event_json
         summary = e.get('body', '').replace(r'%"', '')
         if 'time' in e:
-            summary = summary[6:]
+            summary = summary.split(' ', 1)[1]
         if 'passthru' in e and 'COLOR' in e['passthru']:
             summary = ' '.join(summary.split(' ')[3:])
         return summary
