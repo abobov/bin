@@ -7,12 +7,19 @@
 # https://tools.ietf.org/html/rfc5545
 import datetime
 import json
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from os.path import basename, splitext
 
 
+def escape_text(text):
+    # https://tools.ietf.org/html/rfc5545#section-3.3.11
+    return re.sub(r'[\\;:,]', r'\\\g<0>', text)
+
+
 class Event:
+
     def __init__(self, uid, event_json):
         self.event_json = event_json
         self.uid = uid
@@ -24,7 +31,7 @@ class Event:
             summary = summary.split(' ', 1)[1]
         if 'passthru' in e and 'COLOR' in e['passthru']:
             summary = ' '.join(summary.split(' ')[3:])
-        return summary
+        return escape_text(summary)
 
     def categories(self):
         filename = basename(self.event_json['filename'].upper())
