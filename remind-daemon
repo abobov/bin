@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rem -z -k'notify-send --expire-time=0 --icon x-office-calendar Reminder "%s" &' || \
+    notify-send --urgency=critical --expire-time=0 Reminder "Daemon failed with code: $?"
+
