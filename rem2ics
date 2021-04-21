@@ -26,11 +26,21 @@ class Event:
 
     def summary(self):
         e = self.event_json
-        summary = e.get('body', '').replace(r'%"', '')
-        if 'time' in e:
-            summary = summary.split(' ', 1)[1]
-        if 'passthru' in e and 'COLOR' in e['passthru']:
-            summary = ' '.join(summary.split(' ')[3:])
+        summary = e.get('body', '')
+        match = re.search(r'%"(.+)%"', summary)
+        if match:
+            summary = match.group(1)
+        else:
+            summary = self.__remove_spec(e, summary)
+        return escape_text(summary)
+
+    def description(self):
+        e = self.event_json
+        summary = e.get('body', '')
+        if '%"' not in summary:
+            return ""
+        summary = summary.replace(r'%"', '')
+        summary = self.__remove_spec(e, summary)
         return escape_text(summary)
 
     def categories(self):
@@ -58,6 +68,13 @@ class Event:
     def __datetime_format(dt):
         return dt.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
 
+    def __remove_spec(self, event, summary):
+        if 'time' in event:
+            summary = summary.split(' ', 1)[1]
+        if 'passthru' in event and 'COLOR' in event['passthru']:
+            summary = ' '.join(summary.split(' ')[3:])
+        return summary
+
 
 def create_uid(event):
     if 'rep' in event and 'until' in event:
@@ -76,6 +93,7 @@ def print_ics(events):
         print('DTSTART:%s' % event.dtstart())
         print('DTEND:%s' % event.dtend())
         print('SUMMARY:%s' % event.summary())
+        print('DESCRIPTION:%s' % event.description())
         print('CATEGORIES:%s' % event.categories())
         print('END:VEVENT')
     print('END:VCALENDAR')
