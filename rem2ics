@@ -56,7 +56,7 @@ class Event:
 
     def dtend(self):
         e = self.event_json
-        if 'rep' in e and 'until' in e:
+        if is_multiple_days_event(e):
             dt = datetime.strptime(e['until'], '%Y-%m-%d')
             return (dt + timedelta(days=1)).strftime('%Y%m%d')
         elif 'eventduration' in e and 'eventstart' in e:
@@ -77,11 +77,18 @@ class Event:
 
 
 def create_uid(event):
-    if 'rep' in event and 'until' in event:
+    if is_multiple_days_event(event):
         date = event['until']
     else:
         date = event['date']
     return "%s:%s:%s" % (basename(event['filename']), event['lineno'], date)
+
+
+def is_multiple_days_event(event):
+    repeat = 'rep' in event
+    has_until_date = 'until' in event
+    has_time = 'time' in event
+    return repeat and has_until_date and not has_time
 
 
 def print_ics(events):
