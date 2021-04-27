@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+watson status
+watson report --day

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+read -p 'Enter project name (press Enter to select): '
+if [[ -z $REPLY ]] ; then
+    PROJECT=$(watson projects | fzf --reverse --tac --no-sort)
+else
+    PROJECT="$REPLY"
+fi
+TAGS=$(watson tags | fzf --reverse --multi | awk '{print "+" $0}' | paste -sd " " -)
+
+watson stop >/dev/null 2>&1 || true
+watson start $PROJECT $TAGS

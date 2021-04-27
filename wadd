@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e
+
+read -p 'Which day? ' -i 'today' -e
+DAY=$(date -d "$REPLY" +%F)
+read -p 'Which time? ' -i "$(date +%H:%M)" -e
+TIME=$(date -d "$REPLY" +%H:%M:%S)
+read -p 'How long? '
+DURATION="$REPLY"
+
+if [[ -z $DURATION ]] ; then
+    exit
+fi
+
+DATE_FORMAT="+%F %H:%M:%S"
+
+START_UNIX=$(($(date -d "$DAY $TIME" +%s) + $DURATION * 60))
+FROM=$(date -d "$DAY $TIME" "$DATE_FORMAT")
+TO=$(date -d "@$START_UNIX" "$DATE_FORMAT")
+
+read -p 'Enter project name (press Enter to select): '
+if [[ -z $REPLY ]] ; then
+    PROJECT=$(watson projects | fzf --reverse --tac --no-sort)
+else
+    PROJECT="$REPLY"
+fi
+TAGS=$(watson tags | fzf --reverse --multi | awk '{print "+" $0}' | paste -sd " " -)
+
+watson add --from "$FROM" --to "$TO" $PROJECT $TAGS
