@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+check_command() {
+    if ! command -v "$1" &>/dev/null ; then
+        echo "No $1 found."
+        exit 1
+    fi
+}
+
+check_command chromium
+check_command mitmproxy
+
+PROXY_PORT=38752
+HTTP_PROXY=http://localhost:$PROXY_PORT chromium --temp-profile "$@" >/dev/null 2>&1 &
+mitmproxy --listen-port=$PROXY_PORT
