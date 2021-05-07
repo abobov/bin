@@ -1,10 +1,96 @@
 #!/bin/bash
 
-sed -e '1,/^# EMOJI STARS HERE/ d' "$0" | fzf | awk '{print $1}' | xsel
+set -e
+
+list() {
+    name="$1"
+    sed -n "/^# $name STARTS HERE$/,/^# $name ENDS HERE$/{//!p;}" "$0" |
+        fzf --no-sort --reverse | awk '{print $1}' | xsel
+}
+
+name=EMOJI
+while [[ $# -gt 0 ]] ; do
+    case "$1" in
+        -g|--git)
+            name=GITMOJI
+            ;;
+    esac
+    shift
+done
+
+list $name
 
 exit 0
 
-# EMOJI STARS HERE
+# curl -Ls https://github.com/carloscuesta/gitmoji/raw/master/src/data/gitmojis.json | jq -r '.gitmojis[] | "\(.emoji)\t\(.description) [\(.name)]"'
+# GITMOJI STARTS HERE
+🎨  Improve structure / format of the code. [art]
+⚡️  Improve performance. [zap]
+🔥  Remove code or files. [fire]
+🐛  Fix a bug. [bug]
+🚑️  Critical hotfix. [ambulance]
+✨  Introduce new features. [sparkles]
+📝  Add or update documentation. [memo]
+🚀  Deploy stuff. [rocket]
+💄  Add or update the UI and style files. [lipstick]
+🎉  Begin a project. [tada]
+✅  Add or update tests. [white-check-mark]
+🔒️  Fix security issues. [lock]
+🔖  Release / Version tags. [bookmark]
+🚨  Fix compiler / linter warnings. [rotating-light]
+🚧  Work in progress. [construction]
+💚  Fix CI Build. [green-heart]
+⬇️ Downgrade dependencies. [arrow-down]
+⬆️ Upgrade dependencies. [arrow-up]
+📌  Pin dependencies to specific versions. [pushpin]
+👷  Add or update CI build system. [construction-worker]
+📈  Add or update analytics or track code. [chart-with-upwards-trend]
+♻️ Refactor code. [recycle]
+➕  Add a dependency. [heavy-plus-sign]
+➖  Remove a dependency. [heavy-minus-sign]
+🔧  Add or update configuration files. [wrench]
+🔨  Add or update development scripts. [hammer]
+🌐  Internationalization and localization. [globe-with-meridians]
+✏️ Fix typos. [pencil2]
+💩  Write bad code that needs to be improved. [poop]
+⏪️  Revert changes. [rewind]
+🔀  Merge branches. [twisted-rightwards-arrows]
+📦️  Add or update compiled files or packages. [package]
+👽️  Update code due to external API changes. [alien]
+🚚  Move or rename resources (e.g.: files, paths, routes). [truck]
+📄  Add or update license. [page-facing-up]
+💥  Introduce breaking changes. [boom]
+🍱  Add or update assets. [bento]
+♿️  Improve accessibility. [wheelchair]
+💡  Add or update comments in source code. [bulb]
+🍻  Write code drunkenly. [beers]
+💬  Add or update text and literals. [speech-balloon]
+🗃️  Perform database related changes. [card-file-box]
+🔊  Add or update logs. [loud-sound]
+🔇  Remove logs. [mute]
+👥  Add or update contributor(s). [busts-in-silhouette]
+🚸  Improve user experience / usability. [children-crossing]
+🏗️  Make architectural changes. [building-construction]
+📱  Work on responsive design. [iphone]
+🤡  Mock things. [clown-face]
+🥚  Add or update an easter egg. [egg]
+🙈  Add or update a .gitignore file. [see-no-evil]
+📸  Add or update snapshots. [camera-flash]
+⚗️ Perform experiments. [alembic]
+🔍️  Improve SEO. [mag]
+🏷️  Add or update types. [label]
+🌱  Add or update seed files. [seedling]
+🚩  Add, update, or remove feature flags. [triangular-flag-on-post]
+🥅  Catch errors. [goal-net]
+💫  Add or update animations and transitions. [animation]
+🗑️  Deprecate code that needs to be cleaned up. [wastebasket]
+🛂  Work on code related to authorization, roles and permissions. [passport-control]
+🩹  Simple fix for a non-critical issue. [adhesive-bandage]
+🧐  Data exploration/inspection. [monocle-face]
+⚰️ Remove dead code. [coffin]
+# GITMOJI ENDS HERE
+
+# EMOJI STARTS HERE
 😀 Grinning Face
 😁 Beaming Face With Smiling Eyes
 😂 Face With Tears of Joy
@@ -121434,3 +121520,4 @@ z latin small letter z
 鼖 cjk compatibility ideograph-2fa1b
 鼻 cjk compatibility ideograph-2fa1c
 𪘀 cjk compatibility ideograph-2fa1d
+# EMOJI ENDS HERE
