@@ -49,7 +49,8 @@ def print_price(symbol, price, base, date=datetime.datetime.now()):
     date_str = date.strftime('%Y/%m/%d %H:%M:%S')
     if ' ' in symbol:
         symbol = '"' + symbol + '"'
-    print(('P %s %s %f %s' % (date_str, symbol, price, base)))
+    if price:
+        print(('P %s %s %f %s' % (date_str, symbol, price, base)))
 
 
 def exchange_rates():
