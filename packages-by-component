@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+print_help() {
+  cat <<EOF
+Usage: $(basename "$0") COMPONENT
+
+COMPONENT - name of component (ex.: contrib, non-free)
+EOF
+  exit 1
+}
+
+list_installed() {
+    dpkg -l | grep '^ii' | cut -d ' ' -f 3 | cut -d ':' -f 1 | sort -u
+}
+
+list_packages() {
+  component="$1"
+  grep '^Package:' /var/lib/apt/lists/*_"${component}"_*Packages | cut -d ' ' -f 2 | sort -u
+
+}
+
+if [ $# -lt 1 ] ; then
+  print_help
+fi
+
+comm -12 <(list_installed) <(list_packages "$1")

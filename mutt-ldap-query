@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""
+Query LDAP directory for users and print it in a mutt query format.
+"""
+import argparse
+import sys
+
+import ldap3
+
+
+def first(values):
+    if values is None or len(values) == 0:
+        return ""
+    return values[0]
+
+
+def split_to_list(string):
+    return string.split(',')
+
+
+def ldap_search(args):
+    search_filter = [f'({f}=*{args.term}*)' for f in args.search_filters]
+    search_filter = '(|' + ''.join(search_filter) + ')'
+
+    with ldap3.Connection(ldap3.Server(args.server, port=args.port),
+                          auto_bind=ldap3.AUTO_BIND_NO_TLS,
+                          read_only=True,
+                          check_names=True,
+                          user=args.username, password=args.password) as c:
+        results = c.extend.standard.paged_search(search_base=args.search_base,
+                                                 search_filter=search_filter,
+                                                 search_scope=ldap3.SUBTREE,
+                                                 attributes=list(args.search_attributes),
+                                                 get_operational_attributes=True,
+                                                 generator=False)
+        count = len(results)
+        if count:
+            print(f'Found {count} entries:')
+            for r in results:
+                attrs = [first(r['attributes'][attr]) for attr in args.search_attributes[:2]]
+                attrs.append(' / '.join([first(r['attributes'][attr]) for attr in args.search_attributes[2:]]))
+                last = '\t'.join(attrs)
+                print(last)
+        else:
+            print('Not found.')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('term', help="search term")
+    parser.add_argument('-s', '--server', required=True, help='server hostname')
+    parser.add_argument('-p', '--port', type=int, default=389, help='server port (default: %(default)s)')
+    parser.add_argument('-u', '--username', help='username')
+    parser.add_argument('-P', '--password', help='password')
+    parser.add_argument('-b', '--search-base', metavar="SB", default='ou=people', type=split_to_list,
+                        help="search base string (default: %(default)s)")
+    parser.add_argument('-f', '--search-filters', metavar="FILTERS",
+                        default='mail,cn', type=split_to_list,
+                        help="list of fields to filter (default: %(default)s)")
+    parser.add_argument('-a', '--search-attributes', metavar="ATTRIBUTES",
+                        default='mail,cn', type=split_to_list,
+                        help="list of resulting attributes (default: %(default)s)")
+    args = parser.parse_args()
+
+    ldap_search(args)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        sys.exit(1)

@@ -73,7 +73,9 @@ def stocks():
         params = {"assetclass": "stocks"}
         url = r'https://api.nasdaq.com/api/quote/%s/info' % (symbol)
         data = get_json(url, params=params)
-        price = float(data['data']['keyStats']['PreviousClose']['value'][1:])
+        lastPriceString = data['data']['primaryData']['lastSalePrice']
+        lastPrice = ''.join([c for c in lastPriceString if c.isdigit() or c == '.'])
+        price = float(lastPrice)
         print_price(symbol, price, '$')
 
 
@@ -115,7 +117,7 @@ def bonds():
                 url = r'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities/%s.jsonp?from=%s' % (
                 symbol, date_str)
             else:
-                url = r'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/EQOB/securities/%s.jsonp?from=%s' % (
+                url = r'https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQCB/securities/%s.jsonp?from=%s' % (
                 symbol, date_str)
             data = get_json(url)['securities']
             price = get_moex_value(data, 'PREVPRICE')

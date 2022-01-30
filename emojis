@@ -8,15 +8,32 @@ list() {
         fzf --no-sort --reverse | awk '{print $1}' | xsel
 }
 
+print_help() {
+    cat <<EOF
+Usage: $(basename "$0") [-h|--help] [-g|--git]
+
+-h, --help  prints this message
+-g, --git   list gitmojis
+EOF
+}
+
 name=EMOJI
 while [[ $# -gt 0 ]] ; do
     case "$1" in
         -g|--git)
             name=GITMOJI
             ;;
+        -h|--help)
+            HELP=1
+            ;;
     esac
     shift
 done
+
+if [ "$HELP" = 1 ] ; then
+    print_help
+    exit 0
+fi
 
 list $name
 
