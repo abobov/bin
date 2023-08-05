@@ -1,13 +1,29 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
-recent_value=$(xclip -o -selection clipboard)
-while true ; do
-    value=$(xclip -o -selection clipboard)
-    if [ "$recent_value" != "$value" ] ; then
-        recent_value=$value
-        echo $recent_value
+find_clipboard_command() {
+  if command -v xclip &>/dev/null; then
+    echo xclip -out -selection clipboard
+  elif command -v xsel &>/dev/null; then
+    echo xsel --output --clipboard
+  else
+    echo "No clipboard command found" >&2
+    exit 1
+  fi
+}
+
+main() {
+  CLIPBOARD_COMMAND=$(find_clipboard_command)
+  recent_value=$(eval "$CLIPBOARD_COMMAND")
+  while true; do
+    value=$(eval "$CLIPBOARD_COMMAND")
+    if [ "$recent_value" != "$value" ]; then
+      recent_value=$value
+      echo "$recent_value"
     fi
     sleep 0.1
-done
+  done
+}
+
+main "$@"

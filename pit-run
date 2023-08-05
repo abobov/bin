@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""
+Script add PIT mutation plugin to maven files and run mutations.
+"""
+import argparse
+import os
+import os.path
+import shutil
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+PIT_GROUP_ID = 'org.pitest'
+PIT_ARTIFACT_ID = 'pitest-maven'
+PIT_VERSION = '1.14.2'
+PIT_JUNIT5_ARTIFACT_ID = 'pitest-junit5-plugin'
+PIT_JUNIT5_VERSION = '1.2.0'
+NAMESPACES = {'': 'http://maven.apache.org/POM/4.0.0'}
+for prefix, url in NAMESPACES.items():
+    ET.register_namespace(prefix, url)
+
+MUTATORS = [
+    'STRONGER'
+]
+OPEN_COMMAND = 'x-www-browser' # or xdg-open
+
+
+def create_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-pl', '--projects')
+    parser.add_argument('-pn', '--project-name')
+    parser.add_argument('-am', '--also-make', action='store_true')
+    parser.add_argument('-q', '--quiet', action='store_true')
+    parser.add_argument('globs', nargs='+')
+    return parser
+
+
+def get_pom_files():
+    for root, dirs, files in os.walk('.'):
+        for file in files:
+            if file == 'pom.xml':
+                yield os.path.join(root, file)
+
+
+def make_file_backup(file):
+    dst = '%s.bak.%d' % (file, os.getpid())
+    shutil.copyfile(file, dst)
+    return file, dst
+
+
+def update_pom(file, project, globs):
+    tree = ET.parse(file)
+    root = tree.getroot()
+
+    artifact_id = root.find('./artifactId', NAMESPACES).text
+
+    build = root.find('./build', NAMESPACES)
+    if build is None:
+        build = ET.SubElement(root, 'build')
+    plugins = build.find('./plugins', NAMESPACES)
+    if plugins is None:
+        plugins = ET.SubElement(build, 'plugins')
+
+    plugin = ET.SubElement(plugins, 'plugin')
+    ET.SubElement(plugin, 'groupId').text = PIT_GROUP_ID
+    ET.SubElement(plugin, 'artifactId').text = PIT_ARTIFACT_ID
+    ET.SubElement(plugin, 'version').text = PIT_VERSION
+
+    dependencies = ET.SubElement(plugin, 'dependencies')
+    dependency = ET.SubElement(dependencies, 'dependency')
+    ET.SubElement(dependency, 'groupId').text = PIT_GROUP_ID
+    ET.SubElement(dependency, 'artifactId').text = PIT_JUNIT5_ARTIFACT_ID
+    ET.SubElement(dependency, 'version').text = PIT_JUNIT5_VERSION
+
+    configuration = ET.SubElement(plugin, 'configuration')
+
+    if artifact_id == project or project is None:
+        ET.SubElement(configuration, 'skip').text = 'False'
+        target_classes = ET.SubElement(configuration, 'targetClasses')
+        target_tests = ET.SubElement(configuration, 'targetTests')
+        for glob in globs:
+            ET.SubElement(target_classes, 'param').text = glob
+            ET.SubElement(target_tests, 'param').text = glob
+        mutators = ET.SubElement(configuration, 'mutators')
+        for mutator in MUTATORS:
+            ET.SubElement(mutators, 'mutator').text = mutator
+        formats = ET.SubElement(configuration, 'outputFormats')
+        ET.SubElement(formats, 'outputFormat').text = 'HTML'
+        ET.SubElement(formats, 'outputFormat').text = 'XML'
+    else:
+        ET.SubElement(configuration, 'skip').text = 'True'
+
+    tree.write(file)
+
+
+def run_mutation_coverage(args):
+    command = ['mvn', '--batch-mode', 'test-compile', 'org.pitest:pitest-maven:mutationCoverage']
+    if args.also_make:
+        command.append('--also-make')
+    if args.projects:
+        command.append('--projects')
+        command.append(args.projects)
+    if args.quiet:
+        command.append('--quiet')
+    subprocess.call(' '.join(command), shell=True, stdout=sys.stdout, stderr=sys.stderr)
+
+
+def print_details(filename):
+    subprocess.call(['pandoc', '--to', 'plain', filename], stdout=sys.stdout, stderr=sys.stderr)
+
+
+def open_result(project):
+    target = os.path.join(project, 'target', 'pit-reports')
+    dirs = os.listdir(target)
+    if dirs:
+        last_dir = sorted(dirs)[-1]
+        index_file = os.path.join(target, last_dir, 'index.html')
+        if os.path.isfile(index_file):
+            print_details(index_file)
+            print('Report:', os.path.abspath(index_file))
+            subprocess.call([OPEN_COMMAND, os.path.abspath(index_file)])
+
+
+def update_pom_files(args):
+    backup_files = []
+    try:
+        for file in get_pom_files():
+            backup_files.append(make_file_backup(file))
+            update_pom(file, args.project_name or args.projects, args.globs)
+
+        run_mutation_coverage(args)
+        open_result(args.projects)
+    finally:
+        for orig, backup in backup_files:
+            shutil.move(backup, orig)
+
+
+def main():
+    args = create_args().parse_args()
+    update_pom_files(args)
+
+
+if __name__ == '__main__':
+    main()

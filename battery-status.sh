@@ -8,15 +8,15 @@ print_status() {
     [ $print_sepparator = true ] && printf ' '
 
     case "$status" in
-        "Full")
+        "Full"|"Not charging")
             return;;
         "Discharging")
-            status="-";;
+            status="↓";;
         "Charging")
-            status="+";;
+            status="↑";;
         "Unknown")
             # Probably rich the threshold
-            if [ $(echo "$current_charge > 50" | bc -l) == 1 ] ; then
+            if [ "$(echo "$current_charge > 50" | bc -l)" == 1 ] ; then
                 return
             fi
             status="?"
@@ -25,7 +25,7 @@ print_status() {
             status="?";;
     esac
 
-    printf '%s %.0f%s' $(basename $bat)  $current_charge "$status"
+    printf '%s %.0f%s' "$(basename "$bat")" "$current_charge" "$status"
 
     print_sepparator=true
 }
