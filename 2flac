@@ -1,0 +1,24 @@
+#!/bin/bash
+# Convert APE (Monkey Audio Format) to FLAC using ffmpeg.
+
+set -euo pipefail
+
+usage() {
+  echo "Usage: $(basename "$0") [input file]..."
+  echo "Converts input files into FLAC format."
+  exit 0
+}
+
+main() {
+  if [ $# = 0 ]; then
+    usage
+  fi
+  for input in "$@"; do
+    if [ -f "$input" ]; then
+      output="${input%.*}.flac"
+      ffmpeg -loglevel error -hide_banner -i "$input" -acodec flac "$output"
+    fi
+  done
+}
+
+main "$@"

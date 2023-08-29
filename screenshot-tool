@@ -1,0 +1,23 @@
+#!/bin/bash
+# Fix issue: window loose focus after flameshot
+
+set -euo pipefail
+
+flameshot_run() {
+  focused_window=$(xdotool getwindowfocus)
+  flameshot gui || true
+  if [ "$focused_window" != "$(xdotool getwindowfocus)" ]; then
+    xdotool windowactivate "$focused_window"
+  fi
+}
+
+main() {
+  if command -v flameshot >/dev/null 2>&1; then
+    flameshot_run "$@"
+  else
+    echo "No flameshot command found"
+    exit 1
+  fi
+}
+
+main "$@"

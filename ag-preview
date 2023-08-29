@@ -1,0 +1,18 @@
+#!/bin/bash
+# Based on https://github.com/junegunn/fzf/blob/master/ADVANCED.md#ripgrep-integration
+
+set -euo pipefail
+
+main() {
+  AG_PREFIX="ag --column --numbers --noheading --color --smart-case"
+  INITIAL_QUERY="${*:-}"
+  : | fzf --ansi --disabled --query "$INITIAL_QUERY" \
+    --bind "start:reload:$AG_PREFIX {q}" \
+    --bind "change:reload:sleep 0.1; $AG_PREFIX {q} || true" \
+    --delimiter : \
+    --preview 'bat --color=always {1} --highlight-line {2}' \
+    --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
+    --bind 'enter:become(vim {1} +{2})'
+}
+
+main "$@"
