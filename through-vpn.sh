@@ -8,6 +8,4 @@ if [ $# -eq 0 ] ; then
     exit 1
 fi
 
-comment=$(date +%F)
-
-ssh riga "/ip firewall address-list add address=$1 list=through-vpn comment=\"$comment\""
+ssh riga "/ip firewall address-list add address=$1 list=through-vpn"

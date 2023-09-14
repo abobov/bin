@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 
 PIT_GROUP_ID = 'org.pitest'
 PIT_ARTIFACT_ID = 'pitest-maven'
-PIT_VERSION = '1.14.2'
+PIT_VERSION = '1.14.4'
 PIT_JUNIT5_ARTIFACT_ID = 'pitest-junit5-plugin'
 PIT_JUNIT5_VERSION = '1.2.0'
 NAMESPACES = {'': 'http://maven.apache.org/POM/4.0.0'}

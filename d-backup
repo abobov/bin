@@ -7,9 +7,9 @@
 # TARGET="sftp://server/path"
 # ---------------- 8< --------------------
 
-if [ ! "$(whoami)" = root ] ; then
-    echo "This script must be run by the user: root"
-    exit 1
+if [ ! "$(whoami)" = root ]; then
+  echo "This script must be run by the user: root"
+  exit 1
 fi
 
 HOME=/home/anton
@@ -20,7 +20,7 @@ source "$HOME/.duplicity.conf"
 SOURCE=/
 
 print_help() {
-    cat <<EOF
+  cat <<EOF
 Commands:
   backup        run backup
   cleanup       cleanup
@@ -32,60 +32,68 @@ Options:
 EOF
 }
 
+_duplicity() {
+  GNUPGHOME=/root/.gnupg nice ionice duplicity $DUPLICITY_OPTS "$@"
+}
+
 backup() {
-    nice ionice duplicity $DUPLICITY_OPTS \
-        --exclude-filelist "$HOME/.duplicity-exclude" \
-        --full-if-older-than "$FULL_IF_OLDER_THAN" \
-        "$SOURCE" "$TARGET"
-    cleanup
+  _duplicity --exclude-filelist "$HOME/.duplicity-exclude" \
+    --full-if-older-than "$FULL_IF_OLDER_THAN" \
+    "$SOURCE" "$TARGET"
+  cleanup
 }
 
 cleanup() {
-    duplicity $DUPLICITY_OPTS cleanup --force "$TARGET"
-    duplicity $DUPLICITY_OPTS remove-all-but-n-full $REMOVE_ALL_BUT_N_FULL --force "$TARGET"
+  _duplicity cleanup --force "$TARGET"
+  _duplicity remove-all-but-n-full $REMOVE_ALL_BUT_N_FULL --force "$TARGET"
 }
 
 stats() {
-    duplicity $DUPLICITY_OPTS collection-status "$TARGET"
+  _duplicity collection-status "$TARGET"
 }
 
 list() {
-    duplicity $DUPLICITY_OPTS list-current-files "$@" "$TARGET"
+  _duplicity list-current-files "$@" "$TARGET"
 }
 
 restore() {
-    duplicity $DUPLICITY_OPTS restore "$@" "$TARGET" "$(pwd)"
+  _duplicity restore "$@" "$TARGET" "$(pwd)"
 }
 
-if [[ $# = 0 ]] ; then
-    print_help
-    exit 0
+if [[ $# = 0 ]]; then
+  print_help
+  exit 0
 fi
 
-while (( "$#" )) ; do
-    case "$1" in
-        backup)
-            backup
-            ;;
-        cleanup)
-            cleanup
-            ;;
-        stats)
-            stats
-            ;;
-        list)
-            shift
-            list "$@"
-            exit 0
-            ;;
-        restore)
-            shift
-            restore "$@"
-            exit 0
-            ;;
-        *)
-            print_help
-            ;;
-    esac
+while (("$#")); do
+  case "$1" in
+  backup)
+    backup
+    ;;
+  cleanup)
+    cleanup
+    ;;
+  stats)
+    stats
+    ;;
+  list)
     shift
+    list "$@"
+    exit 0
+    ;;
+  restore)
+    shift
+    restore "$@"
+    exit 0
+    ;;
+  -h | --help | help)
+    print_help
+    ;;
+  *)
+    shift
+    _duplicity "$@"
+    exit 0
+    ;;
+  esac
+  shift
 done
