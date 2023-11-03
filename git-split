@@ -14,5 +14,5 @@ git reset HEAD^
 
 git diff-tree --no-commit-id --name-only -r "$SHA" | while read -r f; do
   git add "$f"
-  GIT_EDITOR="echo '0a\n$SHA $f\n\n.\nw' | ed -s" git commit -c "$SHA"
+  GIT_EDITOR="echo '0a\n$SHA $f\n\n.\nw' | ed -s" git commit -c "$SHA" --no-verify
 done
