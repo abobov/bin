@@ -14,6 +14,7 @@ fi
 
 HOME=/home/anton
 REMOVE_ALL_BUT_N_FULL=4
+REMOVE_OLDER_THAN=1Y
 FULL_IF_OLDER_THAN=3M
 
 source "$HOME/.duplicity.conf"
@@ -48,6 +49,11 @@ cleanup() {
   _duplicity remove-all-but-n-full $REMOVE_ALL_BUT_N_FULL --force "$TARGET"
 }
 
+cleanup-old() {
+  _duplicity cleanup --force "$TARGET"
+  _duplicity remove-older-than $REMOVE_OLDER_THAN --force "$TARGET"
+}
+
 stats() {
   _duplicity collection-status "$TARGET"
 }
@@ -72,6 +78,9 @@ while (("$#")); do
     ;;
   cleanup)
     cleanup
+    ;;
+  cleanup-old)
+    cleanup-old
     ;;
   stats)
     stats

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -euo pipefail
+
+find_clipboard_image_mime_type() {
+  xclip -selection clipboard -t TARGETS -o | grep '^image/' | head -1 || true
+}
+
+save_clipboard_image_to_file() {
+  mime="$1"
+  outdir="$2"
+  extension=${mime#*/}
+  date=$(date +%F-%R)
+  template="clipboard-$date-XXXX"
+  filename=$(mktemp --tmpdir="$outdir" --suffix ".$extension" -t "$template")
+  xclip -selection clipboard -t "$mime" -o >"$filename"
+  echo "$filename"
+}
+
+main() {
+  mime=$(find_clipboard_image_mime_type)
+  if [ -z "$mime" ]; then
+    echo No image in cliboard >&2
+    exit 1
+  fi
+  save_clipboard_image_to_file "$mime" "$PWD"
+}
+
+main "$@"

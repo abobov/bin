@@ -1,0 +1,52 @@
+#!/bin/bash
+
+set -euo pipefail
+
+NETSHOOT_IMAGE="nicolaka/netshoot"
+
+usage() {
+  echo "Run netshoot container with docker network."
+  echo "Options:"
+  printf "\t%s\t\t%s\n" "-h" "print this help"
+  printf "\t%s\t%s\n" "-n NETWORK" "user provided network"
+  printf "\t%s\t\t%s\n" "-N" "user default network"
+}
+
+select_network() {
+  docker network ls | fzf \
+    --header-lines=1 \
+    --select-1 --exit-0 \
+    --preview-label="Containers" \
+    --preview-window=down,10 \
+    --preview "docker network inspect {1} | jq -r '.[].Containers | .[].Name'" | awk '{print $1}'
+}
+
+main() {
+  local network=
+  while getopts "hNn:" opt; do
+    case "${opt}" in
+    h)
+      usage
+      exit
+      ;;
+    N)
+      network="default"
+      ;;
+    n)
+      network="$OPTARG"
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  if [ -z "$network" ]; then
+    network=$(select_network)
+  fi
+  docker run --interactive --tty --rm --network "$network" "$NETSHOOT_IMAGE"
+}
+
+main "$@"

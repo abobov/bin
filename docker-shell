@@ -1,0 +1,30 @@
+#!/bin/bash
+# Exec shell into running container.
+
+set -euo pipefail
+
+select_container() {
+  docker ps | fzf \
+    --header-lines=1 \
+    --select-1 --exit-0 \
+    --preview-label="Logs" \
+    --preview-window=down,10 \
+    --preview "docker logs --tail=9 {1}" | awk '{print $1}'
+}
+
+main() {
+  if [ $# -eq 0 ]; then
+    container=$(select_container)
+  else
+    if ! docker inspect "$1" >/dev/null 2>&1; then
+      echo "No running container: $1"
+      exit 1
+    fi
+    container="$1"
+  fi
+  for command in /bin/bash /bin/sh; do
+    docker exec --interactive --tty "$container" "$command" || continue && exit 0
+  done
+}
+
+main "$@"

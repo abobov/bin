@@ -1,0 +1,17 @@
+#!/bin/bash
+# https://docs.mergestat.com/blog/2023/01/03/finding-code-hotspots-in-git-repos
+#
+# Finds hotspots as the files most frequently modified (by number of commits).
+
+set -euo pipefail
+
+main() {
+  git log --format=format: --name-only --since=12.month "$@" |
+    grep -vE '^$' |
+    sort |
+    uniq -c |
+    sort -nr |
+    head -50
+}
+
+main "$@"
