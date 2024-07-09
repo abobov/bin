@@ -13,7 +13,21 @@ find_clipboard_command() {
   fi
 }
 
+clipman_settings() {
+  xfconf-query -c xfce4-panel -p /plugins/clipman/settings/enable-actions "$@" 2>/dev/null
+}
+
+restore_clipman_actions() {
+  if [ -n "$1" ]; then
+    clipman_settings -s "$1"
+  fi
+}
+
 main() {
+  CLIPMAN_ACTION_STATE=$(clipman_settings || echo)
+  trap 'restore_clipman_actions "$CLIPMAN_ACTION_STATE"' EXIT
+  clipman_settings -s 'false' >/dev/null || true
+
   CLIPBOARD_COMMAND=$(find_clipboard_command)
   recent_value=$(eval "$CLIPBOARD_COMMAND")
   while true; do
