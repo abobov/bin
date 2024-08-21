@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Run man page in vim
+# https://github.com/vim-utils/vim-man
+
+vim -c "Man $1 $2" -c 'silent only'
