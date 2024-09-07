@@ -1,0 +1,43 @@
+#!/bin/bash
+# Updates all Ollama models.
+
+set -euo pipefail
+
+is_ollama_running() {
+  ollama ps &>/dev/null
+}
+
+ensure_ollama_running() {
+  if ! is_ollama_running; then
+    ollama serve &>/dev/null 2>&1 &
+    OLLAMA_PID=$!
+    trap 'kill $OLLAMA_PID' EXIT
+    local retry=3
+    while ! is_ollama_running; do
+      retry=$((retry - 1))
+      if [ $retry -lt 1 ]; then
+        echo "ollama serve not responding" >&2
+        exit 1
+      fi
+      sleep 1s
+    done
+  fi
+}
+
+update_models() {
+  ollama list | awk 'NR>1{print $1}' | while read -r model; do
+    echo "Updating $model"
+    ollama pull "$model"
+  done
+}
+
+main() {
+  if ! command -v ollama >/dev/null; then
+    echo "No ollama command in path.  See https://ollama.com/."
+    exit 1
+  fi
+  ensure_ollama_running
+  update_models
+}
+
+main "$@"
