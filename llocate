@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Local locate, store DB in user directory.
+# Update on run if older than configured.
+
+set -euo pipefail
+
+DEFAULT_LLOCATE_DB_PATH=$HOME/.cache/locate.db
+DEFAULT_LLOCATE_DB_AGE=1day
+
+LLOCATE_DB_PATH=${LLOCATE_DB_PATH:-$DEFAULT_LLOCATE_DB_PATH}
+LLOCATE_DB_AGE=${LLOCATE_DB_AGE:-$DEFAULT_LLOCATE_DB_AGE}
+
+usage() {
+  cat <<EOF
+Usage: ${0##*/} [-h|-u] [locate options] term
+
+Perform locate for given term.
+
+Options:
+  -u force updatedb
+  -h show this help
+
+Envirinment variances:
+
+  LLOCATE_DB_PATH path to databas file (default: $DEFAULT_LLOCATE_DB_PATH)
+  LLOCATE_DB_AGE  period after which database need to update,
+                  in date string format (default: $DEFAULT_LLOCATE_DB_AGE)
+EOF
+  exit 1
+}
+
+update() {
+  updatedb --require-visibility 0 --output "$LLOCATE_DB_PATH"
+}
+
+is_database_old() {
+  local threshold db_mtime
+  threshold=$(date -d "-$LLOCATE_DB_AGE" +%s)
+  db_mtime=$(date -r "$LLOCATE_DB_PATH" +%s)
+  if [ "$threshold" -gt "$db_mtime" ]; then
+    return 0
+  fi
+  return 1
+}
+
+main() {
+  if [ $# -eq 0 ]; then
+    usage
+  fi
+
+  while :; do
+    case "$1" in
+    -u)
+      update
+      shift
+      ;;
+    -h) usage ;;
+    *) break ;;
+    esac
+  done
+
+  if is_database_old; then
+    update
+  fi
+  locate --database "$LLOCATE_DB_PATH" "$@" | ${PAGER:-less}
+}
+
+main "$@"
