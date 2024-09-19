@@ -16,9 +16,9 @@ from xml.etree.ElementTree import SubElement, Element, parse, register_namespace
 
 PIT_GROUP_ID = "org.pitest"
 PIT_ARTIFACT_ID = "pitest-maven"
-PIT_VERSION = "1.14.4"
+PIT_VERSION = "1.16.1"
 PIT_PLUGINS = [
-    (PIT_GROUP_ID, "pitest-junit5-plugin", "1.2.0"),
+    (PIT_GROUP_ID, "pitest-junit5-plugin", "1.2.1"),
 ]
 MUTATORS = ["STRONGER"]
 BROWSER_COMMAND = "x-www-browser"  # or xdg-open
