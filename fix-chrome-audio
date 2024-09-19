@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# PulseAudio: Server restart permanently breaks microphone access
+# https://issues.chromium.org/issues/40693791#comment4
+
+set -euo pipefail
+
+main() {
+  pkill -f '/usr/bin/chromium --type=utility --utility-sub-type=audio'
+}
+
+main "$@"
