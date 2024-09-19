@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Thinkpad Dock station ethernet card has issue with dropping network
+# connection.  Reloading module helps.
+
+set -euo pipefail
+
+MODULE=r8152
+
+sudo rmmod $MODULE && sudo modprobe $MODULE
