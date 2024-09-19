@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  local TOOLBOX_PATH="$HOME/.local/share/JetBrains/Toolbox"
+
+  for edition in intellij-idea-{ultimate,community-edition}; do
+    local idea_bin="$TOOLBOX_PATH/apps/$edition/bin/idea.sh"
+    if [ -x "$idea_bin" ]; then
+      "$idea_bin" "$@" >/dev/null 2>&1 &
+      exit 0
+    fi
+  done
+
+  echo "No idea found in toolbox path: $TOOLBOX_PATH" >&2
+  exit 1
+}
+
+main "$@"
