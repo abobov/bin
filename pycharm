@@ -6,7 +6,7 @@ main() {
   local TOOLBOX_PATH="$HOME/.local/share/JetBrains/Toolbox"
 
   for edition in pycharm-{ultimate,community}; do
-    local idea_bin="$TOOLBOX_PATH/apps/$edition/bin/idea.sh"
+    local idea_bin="$TOOLBOX_PATH/apps/$edition/bin/pycharm.sh"
     if [ -x "$idea_bin" ]; then
       "$idea_bin" "$@" >/dev/null 2>&1 &
       exit 0
