@@ -4,7 +4,11 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: ${0##*/} [OPTIONS] unit-name" >&2
+  cat <<EOF >&2
+Usage: ${0##*/} [OPTIONS] unit-name
+
+OPTIONS is systemctl options.  User --user for user service.
+EOF
   exit 1
 }
 
