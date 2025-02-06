@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+help() {
+  cat <<EOF
+Usage: ${0##*/} [-p] [-h] [HOST] PORT
+
+Wait until specified PORT is available on HOST (localhost if HOST ommited).
+
+  -p  print progress every second
+  -h  print this help
+EOF
+}
+
+main() {
+  show_progress=""
+  while getopts "ph" opt; do
+    case "${opt}" in
+    p)
+      show_progress=t
+      ;;
+    h)
+      help
+      exit
+      ;;
+    *)
+      help
+      exit 1
+      ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  if [ $# -eq 2 ]; then
+    host="$1"
+    port="$2"
+  elif [ $# -eq 1 ]; then
+    port="$1"
+  else
+    echo "No host/port provided"
+    help
+    exit 1
+  fi
+
+  until nc -z "${host:-localhost}" "$port"; do
+    [ -n "$show_progress" ] && echo -n .
+    sleep 1
+  done
+}
+
+main "$@"
