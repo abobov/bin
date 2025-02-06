@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  if [ $# -eq 0 ]; then
+    alert "Added" -- buku --nostdin --add "$(xsel -ob)" need review
+  else
+    alert "Added" -- buku --nostdin --add "$1" need review
+  fi
+}
+
+main "$@"

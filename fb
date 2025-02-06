@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  mapfile -t ids <<<"$(buku -p -f4 | fzf -m --reverse --preview "buku -p {1}" --preview-window=wrap | cut -f1)"
+
+  # open each website
+  for id in "${ids[@]}"; do
+    buku -p "$id"
+    buku -o "$id"
+  done
+}
+
+main "$@"
