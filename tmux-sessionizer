@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Based on https://github.com/edr3x/tmux-sessionizer
+
+set -euo pipefail
+
+main() {
+  if [ $# -eq 1 ]; then
+    selected=$(realpath "$1")
+  else
+    read -r -a extra_paths <<<"${TMUX_SESSIONIZER_EXTRA_PATHS:-}"
+    selected=$(find ~/src "${extra_paths[@]}" -mindepth 1 -maxdepth 1 -type d | fzf --scheme path --tiebreak end)
+  fi
+
+  if [ -z "$selected" ]; then
+    exit
+  fi
+
+  session_name="$(basename "$selected" | tr . _)"
+
+  if ! pgrep tmux >/dev/null; then
+    tmux new-session -s "$session_name" -c "$selected"
+    exit
+  fi
+
+  if [ -z "${TMUX:-}" ]; then
+    tmux new-session -A -s "$session_name" -c "$selected"
+  fi
+
+  if ! tmux has-session -t "$session_name" 2>/dev/null; then
+    tmux new-session -ds "$session_name" -c "$selected"
+    tmux switch-client -t "$session_name"
+  fi
+}
+
+main "$@"
