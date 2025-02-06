@@ -1,18 +1,28 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-if [ ! -x "$(command -v tesseract)" ] ; then
-    echo "No tesseract executable"
+set -euo pipefail
+
+check_command() {
+  if [ ! -x "$(command -v "$1")" ]; then
+    echo "No $1 executable"
     exit 1
-fi
-if [ ! -x "$(command -v scrot)" ] ; then
-    echo "No scrot executable"
-    exit 1
-fi
+  fi
+}
 
-TEMP_FILE=$(mktemp --suffix .png)
-L=${1:-eng}
-trap "rm $TEMP_FILE" EXIT
+main() {
+  check_command tesseract
+  check_command scrot
+  check_command mogrify
+  check_command xclip
 
-scrot --select --quality 100 --overwrite "$TEMP_FILE"
-mogrify -modulate 100,0 -resize 400% "$TEMP_FILE"
-tesseract -l $L "$TEMP_FILE" - 2>/dev/null | sed '//d' | xclip -sel clip
+  TEMP_FILE=$(mktemp --suffix .png)
+  trap 'rm "$TEMP_FILE"' EXIT
+
+  ocr_language=${1:-eng}
+
+  scrot --select --quality 100 --overwrite "$TEMP_FILE" &&
+    mogrify -modulate 100,0 -resize 400% "$TEMP_FILE" &&
+    tesseract -l "$ocr_language" "$TEMP_FILE" - 2>/dev/null | xclip -sel clip
+}
+
+main "$@"
