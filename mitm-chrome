@@ -1,17 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
+
+MITM_COMMAND=${MITM_COMMAND:-mitmweb}
 
 check_command() {
-    if ! command -v "$1" &>/dev/null ; then
-        echo "No $1 found."
-        exit 1
-    fi
+  if ! command -v "$1" &>/dev/null; then
+    echo "No $1 found."
+    exit 1
+  fi
 }
 
-check_command chromium
-check_command mitmproxy
+main() {
+  check_command chromium
+  check_command "$MITM_COMMAND"
 
-PROXY_PORT=38752
-HTTP_PROXY=http://localhost:$PROXY_PORT chromium --temp-profile "$@" >/dev/null 2>&1 &
-mitmproxy --listen-port=$PROXY_PORT
+  PROXY_PORT=38752
+  HTTP_PROXY=http://localhost:$PROXY_PORT
+  chromium --proxy-server=$HTTP_PROXY --temp-profile "$@" >/dev/null 2>&1 &
+  "$MITM_COMMAND" --listen-port=$PROXY_PORT
+}
+
+main "$@"
