@@ -5,7 +5,6 @@
 # Usage example: rem -ppp12 | rem2ics
 #
 # https://tools.ietf.org/html/rfc5545
-import datetime
 import json
 import re
 import sys
@@ -13,105 +12,108 @@ from datetime import datetime, timedelta, timezone
 from os.path import basename, splitext
 
 
-def escape_text(text):
+def escape_text(text: str) -> str:
     # https://tools.ietf.org/html/rfc5545#section-3.3.11
-    return re.sub(r'[\\;:,]', r'\\\g<0>', text)
+    return re.sub(r"[\\;:,]", r"\\\g<0>", text)
 
 
 class Event:
-
-    def __init__(self, uid, event_json):
+    def __init__(self, uid: str, event_json: dict) -> None:
         self.event_json = event_json
         self.uid = uid
 
-    def summary(self):
-        e = self.event_json
-        summary = e.get('body', '')
+    def summary(self) -> str:
+        event = self.event_json
+        summary = event.get("body", "")
         match = re.search(r'%"(.+)%"', summary)
         if match:
             summary = match.group(1)
         else:
-            summary = self.__remove_spec(e, summary)
+            summary = self.__remove_spec(event, summary)
         return escape_text(summary)
 
-    def description(self):
-        e = self.event_json
-        summary = e.get('body', '')
+    def description(self) -> str:
+        event = self.event_json
+        summary = event.get("body", "")
         if '%"' not in summary:
-            return ""
-        summary = summary.replace(r'%"', '')
-        summary = self.__remove_spec(e, summary)
+            return summary
+        summary = summary.replace(r'%"', "")
+        summary = self.__remove_spec(event, summary)
         return escape_text(summary)
 
-    def categories(self):
-        filename = basename(self.event_json['filename'].upper())
+    def categories(self) -> str:
+        filename = basename(self.event_json["filename"].upper())
         return splitext(filename)[0]
 
-    def dtstart(self):
-        e = self.event_json
-        if 'eventstart' in e:
-            dt = datetime.strptime(e['eventstart'], '%Y-%m-%dT%H:%M')
-            return self.__datetime_format(dt)
-        return e['date'].replace('-', '')
+    def dtstart(self) -> str:
+        event = self.event_json
+        if "eventstart" in event:
+            event_datetime = datetime.strptime(event["eventstart"], "%Y-%m-%dT%H:%M")
+            return self.__datetime_format(event_datetime)
+        return event["date"].replace("-", "")
 
-    def dtend(self):
-        e = self.event_json
-        if is_multiple_days_event(e):
-            dt = datetime.strptime(e['until'], '%Y-%m-%d')
-            return (dt + timedelta(days=1)).strftime('%Y%m%d')
-        elif 'eventduration' in e and 'eventstart' in e:
-            dt = datetime.strptime(e['eventstart'], '%Y-%m-%dT%H:%M')
-            return self.__datetime_format(dt + timedelta(minutes=int(e['eventduration'])))
+    def dtend(self) -> str:
+        event = self.event_json
+        if is_multiple_days_event(event):
+            event_datetime = datetime.strptime(event["until"], "%Y-%m-%d")
+            return (event_datetime + timedelta(days=1)).strftime("%Y%m%d")
+        if "eventduration" in event and "eventstart" in event:
+            event_datetime = datetime.strptime(event["eventstart"], "%Y-%m-%dT%H:%M")
+            return self.__datetime_format(
+                event_datetime + timedelta(minutes=int(event["eventduration"]))
+            )
         return self.dtstart()
 
     @staticmethod
-    def __datetime_format(dt):
-        return dt.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    def __datetime_format(event_datetime: datetime) -> str:
+        return event_datetime.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
-    def __remove_spec(self, event, summary):
-        if 'time' in event:
-            summary = summary.split(' ', 1)[1]
-        if 'passthru' in event and 'COLOR' in event['passthru']:
-            summary = ' '.join(summary.split(' ')[3:])
+    def __remove_spec(self, event: dict, summary: str) -> str:
+        if "time" in event:
+            summary = summary.split(" ", 1)[1]
+        if "passthru" in event and "COLOR" in event["passthru"]:
+            summary = " ".join(summary.split(" ")[3:])
         return summary
 
 
-def create_uid(event):
+def create_uid(event: dict) -> str:
     if is_multiple_days_event(event):
-        date = event['until']
+        date = event["until"]
     else:
-        date = event['date']
-    return "%s:%s:%s" % (basename(event['filename']), event['lineno'], date)
+        date = event["date"]
+    filename = event["filename"]
+    lineno = event["lineno"]
+    return f"{basename(filename)}:{lineno}:{date}"
 
 
-def is_multiple_days_event(event):
-    repeat = 'rep' in event
-    has_until_date = 'until' in event
-    has_time = 'time' in event
+def is_multiple_days_event(event: dict) -> bool:
+    repeat = "rep" in event
+    has_until_date = "until" in event
+    has_time = "time" in event
     return repeat and has_until_date and not has_time
 
 
-def print_ics(events):
-    print('BEGIN:VCALENDAR')
-    print('VERSION:2.0')
+def print_ics(events: list[Event]) -> None:
+    print("BEGIN:VCALENDAR")
+    print("VERSION:2.0")
     for event in events:
-        print('BEGIN:VEVENT')
-        print('UID:%s' % event.uid)
-        print('DTSTART:%s' % event.dtstart())
-        print('DTEND:%s' % event.dtend())
-        print('SUMMARY:%s' % event.summary())
-        print('DESCRIPTION:%s' % event.description())
-        print('CATEGORIES:%s' % event.categories())
-        print('END:VEVENT')
-    print('END:VCALENDAR')
+        print("BEGIN:VEVENT")
+        print(f"UID:{event.uid}")
+        print(f"DTSTART:{event.dtstart()}")
+        print(f"DTEND:{event.dtend()}")
+        print(f"SUMMARY:{event.summary()}")
+        print(f"DESCRIPTION:{event.description()}")
+        print(f"CATEGORIES:{event.categories()}")
+        print("END:VEVENT")
+    print("END:VCALENDAR")
 
 
-def rem2ics():
+def rem2ics() -> None:
     added = set()
     events = []
     data = json.load(sys.stdin)
     for month in data:
-        for event_json in month['entries']:
+        for event_json in month["entries"]:
             uid = create_uid(event_json)
             if uid in added:
                 continue
@@ -120,5 +122,5 @@ def rem2ics():
     print_ics(events)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rem2ics()
