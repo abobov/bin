@@ -2,11 +2,31 @@
 
 set -euo pipefail
 
+ADD_TAG="need review"
+
+add() {
+  if [[ $1 =~ (https|ftp|file):// ]]; then
+    index=$(buku --nostdin --json --add "$1" | jq .index)
+    if [ -n "$index" ]; then
+      buku -u "$index" --tag + "$ADD_TAG"
+    fi
+    return 0
+  fi
+  return 1
+}
+
 main() {
+  local url
   if [ $# -eq 0 ]; then
-    alert "Added" -- buku --nostdin --add "$(xsel -ob)" need review
+    url="$(xsel -ob)"
   else
-    alert "Added" -- buku --nostdin --add "$1" need review
+    url="$1"
+  fi
+
+  if add "$url"; then
+    alert "URL added: $url"
+  else
+    alert "URL error: $url"
   fi
 }
 
