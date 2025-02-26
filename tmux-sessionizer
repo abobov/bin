@@ -5,10 +5,21 @@ set -euo pipefail
 
 main() {
   if [ $# -eq 1 ]; then
-    selected=$(realpath "$1")
+    if [ -d "$1" ]; then
+      selected=$(realpath "$1")
+    elif command -v tmuxp >/dev/null; then
+      tmuxp load -y "$1"
+      exit
+    elif command -v tmuxinator >/dev/null; then
+      tmuxinator "$1"
+      exit
+    else
+      echo "Unknown selection"
+      exit 1
+    fi
   else
     read -r -a extra_paths <<<"${TMUX_SESSIONIZER_EXTRA_PATHS:-}"
-    selected=$(find ~/src "${extra_paths[@]}" -mindepth 1 -maxdepth 1 -type d | fzf --scheme path --tiebreak end)
+    selected=$(find ~/src "${extra_paths[@]}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | fzf --scheme path --tiebreak end || true)
   fi
 
   if [ -z "$selected" ]; then
