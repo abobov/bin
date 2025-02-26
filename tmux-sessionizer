@@ -35,12 +35,13 @@ main() {
 
   if [ -z "${TMUX:-}" ]; then
     tmux new-session -A -s "$session_name" -c "$selected"
+    exit
   fi
 
   if ! tmux has-session -t "$session_name" 2>/dev/null; then
     tmux new-session -ds "$session_name" -c "$selected"
-    tmux switch-client -t "$session_name"
   fi
+  tmux switch-client -t "$session_name"
 }
 
 main "$@"
