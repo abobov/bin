@@ -171,8 +171,9 @@ def main() -> None:
         weather_data = query_weather_data(args.location)
         post_process_weather_data(weather_data)
         print_genmon(weather_data)
-    except Exception as e:
-        logging.critical(e, exc_info=args.verbose)
+    except Exception:
+        if args.verbose:
+            raise
         sys.exit(1)
 
 
