@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+check_cmd() {
+  if ! type -p "$1" >/dev/null; then
+    echo "No command: $1" >&2
+    return 1
+  fi
+}
+
+main() {
+  check_cmd scrot
+  check_cmd zbarimg
+  scrot --freeze --quality 95 --select -e 'zbarimg --quiet --raw "$f"; rm "$f"'
+}
+
+main "$@"
