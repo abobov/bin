@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# ssh key migration script, allow to replace old ssh key to new seamlessly
+#
+# Usage example as ssh command replacement:
+#
+# ssh() {
+#   if [ $# -eq 1 ]; then
+#     ssh-key-upgrade "$1"
+#   fi
+#   command ssh "$@"
+# }
+
+set -euo pipefail
+
+SSH_KEY_UPGRADE_OLD_KEY="${SSH_KEY_UPGRADE_OLD_KEY:-$HOME/.ssh/id_rsa.pub}"
+SSH_KEY_UPGRADE_NEW_KEY="${SSH_KEY_UPGRADE_ONEW_KEY:-$HOME/.ssh/id_ed25519.pub}"
+
+main() {
+  local host="$1"
+  local keys='.ssh/authorized_keys'
+  local oldkey
+  oldkey=$(cat "${SSH_KEY_UPGRADE_OLD_KEY}")
+  if ssh "$host" "grep -Fq '$oldkey' '$keys'"; then
+    ssh-copy-id -i "$SSH_KEY_UPGRADE_NEW_KEY" "$host"
+    ssh "$host" "sed -i -e '\#$oldkey#d' $keys"
+  fi
+}
+
+main "$@"
